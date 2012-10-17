@@ -25,6 +25,7 @@ module Mongoid
       end
 
       record.save!
+      destroy_old_historicals!
       record
     end
 
@@ -67,6 +68,18 @@ module Mongoid
         end
       end
 
+      def destroy_old_historicals!
+        if self.class.historical_options[:max]
+          records = self.historicals.asc(:created_at)
+          
+          if (num_to_delete = records.size - self.class.historical_options[:max]) > 0
+            records[0, num_to_delete].each do |r|
+              self.historicals.delete(r)
+            end
+          end
+        end
+      end
+
     module ClassMethods
 
       # This model should record historical values for the specified
@@ -74,7 +87,8 @@ module Mongoid
       #
       # Options:
       # 
-      #   <tt>max</tt>: The maximum number of entries to store
+      #   <tt>max</tt>: The maximum number of entries to store (default: none)
+      #   <tt>frequency</tt>: :monthly, :weekly, or :daily (default: :daily)
       #
       def historicals(*attrs)
         options = attrs.extract_options!

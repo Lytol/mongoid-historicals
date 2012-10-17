@@ -15,6 +15,10 @@ describe Mongoid::Historicals do
     it "should have default `max` of nil" do
       Player.historical_options[:max].must_equal nil
     end
+
+    it "should have a default `frequency` of :daily" do
+      Player.historical_options[:frequency].must_equal :daily
+    end
   end
 
   describe "#record!" do
@@ -48,7 +52,22 @@ describe Mongoid::Historicals do
     end
 
     describe "when `max` records is exceeded" do
-      it "should delete the oldest records"
+      before do
+        @player.class.historical_options[:max] = 5
+        5.times do |i|
+          @player.record!(i.to_s)
+        end
+      end
+
+      after do
+        @player.class.historical_options[:max] = nil
+      end
+
+      it "should delete the oldest records" do
+        oldest_record = @player.historicals.desc(:created_at).last
+        @player.record!('test')
+        @player.historicals.wont_include oldest_record
+      end
     end
 
     describe "when labelled with DateTime" do
