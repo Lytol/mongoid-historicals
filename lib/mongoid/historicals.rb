@@ -14,15 +14,16 @@ module Mongoid
       class_attribute :historical_options
     end
 
-    # Save the current values for historicals
+    # Save the current values for historicals by name
     #
-    def record!
-      record_hash = {}
+    def record!(name)
+      record = self.historical_records.build(:'_name' => name)
+
       self.class.historical_attributes.each do |attr|
-        record_hash[attr] = self.send(attr)
+        record[attr] = self.send(attr)
       end
 
-      self.historical_records.create!(record_hash)
+      record.save!
     end
 
     module ClassMethods

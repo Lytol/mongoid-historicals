@@ -4,6 +4,8 @@ module Mongoid
       include Mongoid::Document
       include Mongoid::Timestamps::Created
 
+      field :'_name', type: String
+
     end
   end
 end

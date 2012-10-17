@@ -20,12 +20,16 @@ describe Mongoid::Historicals do
   describe "#record!" do
     before do
       @player = Player.create!(name: "Lytol", score: 95.0)
-      @player.record!
+      @player.record!('test')
       @record = @player.historical_records.first
     end
 
     it "should add a historical record" do
       @player.historical_records.wont_equal []
+    end
+
+    it "should label with specified name" do
+      @record._name.must_equal 'test'
     end
 
     it "should timestamp the record" do
