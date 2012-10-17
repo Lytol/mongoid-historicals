@@ -5,8 +5,8 @@ Gem::Specification.new do |gem|
   gem.version = Mongoid::Historicals::VERSION
   gem.date    = Date.today.to_s
 
-  gem.summary = ""
-  gem.description = ""
+  gem.summary = "Record historical values any attributes in mongoid documents"
+  gem.description = gem.summary
 
   gem.authors  = ['Brian Smith']
   gem.email    = 'bsmith@swig505.com'
