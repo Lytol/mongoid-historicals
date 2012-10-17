@@ -95,18 +95,38 @@ describe Mongoid::Historicals do
       @player.record!('test')
     end
 
-    describe "when record exists" do
-      it "should return record" do
-        @record = @player.historical('test')
-        @record.must_be_instance_of(Mongoid::Historicals::Record)
-        @record._label.must_equal 'test'
+    describe "with one argument" do
+      describe "when record exists" do
+        it "should return record with specified label" do
+          @record = @player.historical('test')
+          @record.must_be_instance_of(Mongoid::Historicals::Record)
+          @record._label.must_equal 'test'
+        end
+      end
+
+      describe "when record does not exist" do
+        it "should return nil" do
+          @record = @player.historical('unknown-label')
+          @record.must_equal nil
+        end
       end
     end
 
-    describe "when record does not exist" do
-      it "should return nil" do
-        @record = @player.historical('unknown-label')
-        @record.must_equal nil
+    describe "with two arguments" do
+      it "should return historical value (from label) of specified attribute" do
+        @player.historical(:score, 'test').must_equal 95.0
+      end
+
+      describe "when record does not exist" do
+        it "should return nil" do
+          @player.historical(:score, 'invalid').must_equal nil
+        end
+      end
+
+      describe "when attribute does not exist" do
+        it "should return nil" do
+          @player.historical(:invalid, 'test').must_equal nil
+        end
       end
     end
   end

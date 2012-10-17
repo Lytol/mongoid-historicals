@@ -32,13 +32,31 @@ module Mongoid
       record
     end
 
-    # Retrieve the historical record specified by label.
+    # Retrieve the historical record or a single attribute value from the 
+    # specified label. If only one argument is given, it will return
+    # the entire record with that label. If two arguments are given, the 
+    # first argument will specify the attribute and the second argument is the
+    # label to use.
     #
-    # @param [String, #to_datetime] label The label as a String, Symbol or DateTime for the historical record that you are fetching. If you pass a DateTime object,
-    #   it will use the <tt>:frequency</tt> option from {ClassMethods#historicals} to fetch from a date/time.
-    # @return [Record] the historical record or nil if none exists.
-    def historical(label)
-      self.historicals.where(:'_label' => labelize(label)).first
+    # @param [String, #to_datetime] attr_or_label If only one argument is given, 
+    #   this is the <tt>label</tt> for the record to be returned. If two arguments 
+    #   are given, this should be the symbol of the attribute whose value should 
+    #   be returned.
+    # @return With one argument given, the historical record or nil if none 
+    #   exists. With two arguments given, it should return the value of the 
+    #   requested attribute for the specified label.
+    def historical(attr_or_label, label = nil)
+      if label.nil?
+        self.historicals.where(:'_label' => labelize(attr_or_label)).first
+      else
+        record = self.historicals.where(:'_label' => labelize(label)).first
+
+        if record
+          record[attr_or_label]
+        else
+          nil
+        end
+      end
     end
 
     # Return the difference between the current value of the attribute and the value of attribute from the 
@@ -53,10 +71,8 @@ module Mongoid
         default: 0
       }.merge(options)
 
-      record = historical(labelize(label))
-
       begin
-        self[attr] - record[attr]
+        self[attr] - historical(attr, label)
       rescue # Pokemon exception handling, but actually seems appropriate here
         opts[:default]
       end
