@@ -14,8 +14,11 @@ module Mongoid
       class_attribute :historical_options
     end
 
-    # Save the current values for historicals by label
+    # Save the current values as a historical record
     #
+    # @param [String, #to_datetime] label The label as a String, Symbol or DateTime that the historical record will be saved as. If you pass a DateTime object, it
+    #   will use the <tt>:frequency</tt> option from historicals to save as a date/time.
+    # @return [Record] the historical record that is saved
     def record!(label = nil)
       label ||= Time.now
       record = historical(label) || self.historicals.build(:'_label' => labelize(label))
@@ -29,10 +32,22 @@ module Mongoid
       record
     end
 
+    # Retrieve the historical record specified by label.
+    #
+    # @param [String, #to_datetime] label The label as a String, Symbol or DateTime for the historical record that you are fetching. If you pass a DateTime object,
+    #   it will use the <tt>:frequency</tt> option from {ClassMethods#historicals} to fetch from a date/time.
+    # @return [Record] the historical record or nil if none exists.
     def historical(label)
       self.historicals.where(:'_label' => labelize(label)).first
     end
 
+    # Return the difference between the current value of the attribute and the value of attribute from the 
+    # <tt>label</tt> historical record.
+    #
+    # @param [Symbol] attr The attribute on which you are calculating the difference
+    # @param [String, Symbol, #to_datetime] label The label as a String, Symbol or Datetime for the historical record against which you are comparing
+    # @param [Hash] options
+    # @option options [Object] :default The value you want returned if there is no historical for comparison (default: 0)
     def historical_difference(attr, label, options = {})
       opts = {
         default: 0
@@ -44,6 +59,26 @@ module Mongoid
         self[attr] - record[attr]
       rescue # Pokemon exception handling, but actually seems appropriate here
         opts[:default]
+      end
+    end
+
+    module ClassMethods
+
+      # This model should record historical values for the specified
+      # attributes.
+      #
+      # @overload historicals(*attrs, options = {})
+      #   @param [Array] attrs The symbol(s) for the attributes for which you want to store historicals
+      #   @param [Hash] options
+      #   @option options [Integer] :max The maximum number of entries to store (default: unlimited)
+      #   @option options [:monthly,:weekly,:daily] The frequency to use for DateTime labels (default: :daily)
+      def historicals(*attrs)
+        options = attrs.extract_options!
+        options[:max] ||= nil
+        options[:frequency] ||= :daily
+
+        self.historical_options = options
+        self.historical_attributes = attrs
       end
     end
 
@@ -79,25 +114,5 @@ module Mongoid
           end
         end
       end
-
-    module ClassMethods
-
-      # This model should record historical values for the specified
-      # attributes.
-      #
-      # Options:
-      # 
-      #   <tt>max</tt>: The maximum number of entries to store (default: none)
-      #   <tt>frequency</tt>: :monthly, :weekly, or :daily (default: :daily)
-      #
-      def historicals(*attrs)
-        options = attrs.extract_options!
-        options[:max] ||= nil
-        options[:frequency] ||= :daily
-
-        self.historical_options = options
-        self.historical_attributes = attrs
-      end
-    end
   end
 end
