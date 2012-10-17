@@ -4,6 +4,8 @@ module Mongoid
       include Mongoid::Document
       include Mongoid::Timestamps::Created
 
+      embedded_in :recordable, inverse_of: :historicals
+
       field :'_label', type: String
     end
   end
