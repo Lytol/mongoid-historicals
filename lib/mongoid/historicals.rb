@@ -71,7 +71,7 @@ module Mongoid
       #   @param [Array] attrs The symbol(s) for the attributes for which you want to store historicals
       #   @param [Hash] options
       #   @option options [Integer] :max The maximum number of entries to store (default: unlimited)
-      #   @option options [:monthly,:weekly,:daily] The frequency to use for DateTime labels (default: :daily)
+      #   @option options [:monthly,:weekly,:daily] :frequency The frequency to use for DateTime labels (default: :daily)
       def historicals(*attrs)
         options = attrs.extract_options!
         options[:max] ||= nil
