@@ -48,7 +48,12 @@ describe Mongoid::Historicals do
     end
 
     describe "when labelled record already exists" do
-      it "should overwrite existing record"
+      it "should overwrite existing record" do
+        @player.update_attribute(:score, 90.0)
+        record = @player.record!('test')
+        @player.historicals.size.must_equal 1
+        @player.historicals.must_include record
+      end
     end
 
     describe "when `max` records is exceeded" do

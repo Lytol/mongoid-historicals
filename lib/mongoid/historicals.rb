@@ -18,7 +18,7 @@ module Mongoid
     #
     def record!(label = nil)
       label ||= Time.now
-      record = self.historicals.build(:'_label' => labelize(label))
+      record = historical(label) || self.historicals.build(:'_label' => labelize(label))
 
       self.class.historical_attributes.each do |attr|
         record[attr] = self.send(attr)
