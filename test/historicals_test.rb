@@ -124,6 +124,16 @@ describe Mongoid::Historicals do
   end
 
   describe "#historical_difference" do
+    before do
+      @player = Player.create!(name: "Lytol", score: 90.5)
+      @player.record!('test')
+      @player.update_attribute(:score, 92.0)
+    end
+
+    it "should return difference from specified label" do
+      @player.historical_difference(:score, 'test').must_equal 1.5
+    end
+
     describe "when there is no historical value" do
       before do
         @player = Player.create!(name: "Lytol", score: nil)
