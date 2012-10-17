@@ -20,16 +20,15 @@ describe Mongoid::Historicals do
   describe "#record!" do
     before do
       @player = Player.create!(name: "Lytol", score: 95.0)
-      @player.record!('test')
-      @record = @player.historical_records.first
+      @record = @player.record!('test')
     end
 
-    it "should add a historical record" do
-      @player.historical_records.wont_equal []
+    it "should add a record to historicals" do
+      @player.historicals.wont_equal []
     end
 
-    it "should label with specified name" do
-      @record._name.must_equal 'test'
+    it "should label with specified label" do
+      @record._label.must_equal 'test'
     end
 
     it "should timestamp the record" do
@@ -43,16 +42,97 @@ describe Mongoid::Historicals do
     it "should not have values for unspecified attributes in record" do
       @record.wont_respond_to :name
     end
+
+    describe "when labelled record already exists" do
+      it "should overwrite existing record"
+    end
+
+    describe "when `max` records is exceeded" do
+      it "should delete the oldest records"
+    end
+
+    describe "when labelled with DateTime" do
+      before do
+        @player.update_attribute(:score, 54.0)
+        @player.record!(5.days.ago)
+        @player.update_attribute(:score, 65.0)
+      end
+
+      it "should be retrievable with DateTime" do
+        record = @player.historical(5.days.ago)
+        record.score.must_equal 54.0
+      end
+    end
   end
 
-  describe "before any recording" do
+  describe "#historical" do
+    before do
+      @player = Player.create!(name: "Lytol", score: 95.0)
+      @player.record!('test')
+    end
+
+    describe "when record exists" do
+      it "should return record" do
+        @record = @player.historical('test')
+        @record.must_be_instance_of(Mongoid::Historicals::Record)
+        @record._label.must_equal 'test'
+      end
+    end
+
+    describe "when record does not exist" do
+      it "should return nil" do
+        @record = @player.historical('unknown-label')
+        @record.must_equal nil
+      end
+    end
+  end
+
+  describe "#historicals" do
     before do
       @player = Player.create!(name: "Lytol", score: 95.0)
     end
 
-    describe "#historical_records" do
+    describe "before any recording" do
       it "should be empty" do
-        @player.historical_records.must_equal []
+        @player.historicals.must_equal []
+      end
+    end
+  end
+
+  describe "#historical_difference" do
+    describe "when there is no historical value" do
+      before do
+        @player = Player.create!(name: "Lytol", score: nil)
+        @player.record!('test')
+        @player.update_attribute(:score, 92.0)
+      end
+
+      it "should return 0" do
+        @player.historical_difference(:score, 'test').must_equal 0
+      end
+
+      describe "and a default is provided" do
+        it "should return specified `default`" do
+          @player.historical_difference(:score, 'test', default: 'none').must_equal 'none'
+        end
+      end
+    end
+
+    describe "when there is no labeled record" do
+      before do
+        @player = Player.create!(name: "Lytol", score: 90.0)
+        @player.record!('test')
+        @player.update_attribute(:score, 92.0)
+      end
+
+      it "should return 0" do
+          @player.historical_difference(:score, 'invalid').must_equal 0
+      end
+
+      describe "and a default is provided" do
+        it "should return specified `default`" do
+          @player.historical_difference(:score, 'invalid', default: 'none').must_equal 'none'
+        end
       end
     end
   end
